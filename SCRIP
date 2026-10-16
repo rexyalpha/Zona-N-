@@ -1,0 +1,689 @@
+# Zona-N-
+//@version=6
+indicator("Asia + London + New York | Fibonacci Modificable", shorttitle="3 Sesiones Fibo", overlay=true, max_boxes_count=10, max_lines_count=60, max_labels_count=10, max_bars_back=5000)
+
+plot(close, title="Salida tecnica", display=display.none)
+
+//=============================================================================
+// 1. ASIA
+//=============================================================================
+string grpAsia = "1. Asia"
+bool activarAsia = input.bool(true, "Activar Asia", group=grpAsia)
+string sesionAsia = input.session("1900-0000", "Horario", group=grpAsia)
+string zonaAsia = input.string("America/New_York", "Zona horaria", options=["America/New_York", "Etc/UTC", "Europe/London", "Asia/Tokyo", "Exchange"], group=grpAsia)
+bool mostrarCajaAsia = input.bool(true, "Caja", inline="asia", group=grpAsia)
+bool mostrarNivel1Asia = input.bool(true, "Nivel 1", inline="asia", group=grpAsia)
+bool mostrarNivel2Asia = input.bool(true, "Nivel 2", inline="asia", group=grpAsia)
+bool mostrarExtAsia = input.bool(true, "Ext.", inline="asia", group=grpAsia)
+
+//=============================================================================
+// 2. LONDON
+//=============================================================================
+string grpLondon = "2. London"
+bool activarLondon = input.bool(true, "Activar London", group=grpLondon)
+string sesionLondon = input.session("0200-0500", "Horario", group=grpLondon)
+string zonaLondon = input.string("America/New_York", "Zona horaria", options=["America/New_York", "Etc/UTC", "Europe/London", "Asia/Tokyo", "Exchange"], group=grpLondon)
+bool mostrarCajaLondon = input.bool(true, "Caja", inline="london", group=grpLondon)
+bool mostrarNivel1London = input.bool(true, "Nivel 1", inline="london", group=grpLondon)
+bool mostrarNivel2London = input.bool(true, "Nivel 2", inline="london", group=grpLondon)
+bool mostrarExtLondon = input.bool(true, "Ext.", inline="london", group=grpLondon)
+
+//=============================================================================
+// 3. NEW YORK
+//=============================================================================
+string grpNY = "3. New York"
+bool activarNY = input.bool(true, "Activar New York", group=grpNY)
+string sesionNY = input.session("0800-0915", "Horario", group=grpNY)
+string zonaNY = input.string("America/New_York", "Zona horaria", options=["America/New_York", "Etc/UTC", "Europe/London", "Asia/Tokyo", "Exchange"], group=grpNY)
+bool mostrarCajaNY = input.bool(true, "Caja", inline="ny", group=grpNY)
+bool mostrarNivel1NY = input.bool(true, "Nivel 1", inline="ny", group=grpNY)
+bool mostrarNivel2NY = input.bool(true, "Nivel 2", inline="ny", group=grpNY)
+bool mostrarExtNY = input.bool(true, "Ext.", inline="ny", group=grpNY)
+
+//=============================================================================
+// 4. NIVELES FIBONACCI MODIFICABLES
+//=============================================================================
+string grpNiveles = "4. Niveles Fibonacci"
+float valorNivel1 = input.float(0.382, "Valor nivel 1", minval=-5.0, maxval=5.0, step=0.001, group=grpNiveles)
+float valorNivel2 = input.float(0.618, "Valor nivel 2", minval=-5.0, maxval=5.0, step=0.001, group=grpNiveles)
+color colorNivel1 = input.color(color.rgb(55, 80, 190), "Color nivel 1", group=grpNiveles)
+int grosorNivel1 = input.int(2, "Grosor nivel 1", minval=1, maxval=4, group=grpNiveles)
+color colorNivel2 = input.color(color.rgb(55, 80, 190), "Color nivel 2", group=grpNiveles)
+int grosorNivel2 = input.int(2, "Grosor nivel 2", minval=1, maxval=4, group=grpNiveles)
+
+//=============================================================================
+// 5. CAJA ENTRE LOS DOS NIVELES
+//=============================================================================
+string grpCaja = "5. Caja entre niveles"
+int transparenciaCaja = input.int(87, "Transparencia", minval=0, maxval=100, group=grpCaja)
+color colorCajaBalance = input.color(color.rgb(93, 155, 225), "Color de la caja", group=grpCaja)
+color colorBordeBalance = input.color(color.rgb(115, 158, 225), "Color del borde", group=grpCaja)
+int grosorBordeBalance = input.int(1, "Grosor del borde", minval=1, maxval=4, group=grpCaja)
+
+//=============================================================================
+// 6. EXTENSIONES MODIFICABLES
+//=============================================================================
+string grpExtensiones = "6. Extensiones Fibonacci"
+float valorExtension1 = input.float(-0.2, "Valor extension 1", minval=-5.0, maxval=5.0, step=0.01, group=grpExtensiones)
+float valorExtension2 = input.float(-0.6, "Valor extension 2", minval=-5.0, maxval=5.0, step=0.01, group=grpExtensiones)
+bool mostrarExt1Arriba = input.bool(true, "Extension 1 arriba", group=grpExtensiones)
+bool mostrarExt1Abajo = input.bool(true, "Extension 1 abajo", group=grpExtensiones)
+bool mostrarExt2Arriba = input.bool(true, "Extension 2 arriba", group=grpExtensiones)
+bool mostrarExt2Abajo = input.bool(true, "Extension 2 abajo", group=grpExtensiones)
+color colorExtension1 = input.color(color.rgb(45, 45, 45), "Color extension 1", group=grpExtensiones)
+int grosorExtension1 = input.int(2, "Grosor extension 1", minval=1, maxval=4, group=grpExtensiones)
+color colorExtension2 = input.color(color.rgb(45, 45, 45), "Color extension 2", group=grpExtensiones)
+int grosorExtension2 = input.int(2, "Grosor extension 2", minval=1, maxval=4, group=grpExtensiones)
+
+//=============================================================================
+// 7. NOMBRES
+//=============================================================================
+string grpNombres = "7. Nombres de las sesiones"
+bool mostrarNombres = input.bool(true, "Mostrar nombres", group=grpNombres)
+color colorNombres = input.color(color.rgb(80, 80, 80), "Color", group=grpNombres)
+float separacionNombre = input.float(8.0, "Separacion sobre el rango (%)", minval=0.0, maxval=100.0, step=1.0, group=grpNombres) / 100.0
+string tamanoNombre = input.string("Pequeno", "Tamano", options=["Muy pequeno", "Pequeno", "Normal", "Grande"], group=grpNombres)
+
+//=============================================================================
+// 8. LONGITUD
+//=============================================================================
+string grpVisual = "8. Longitud"
+int extensionDerecha = input.int(12, "Extension derecha (barras)", minval=0, maxval=500, group=grpVisual)
+
+//=============================================================================
+// 9. DASH MEJORADO
+//=============================================================================
+string grpDash = "9. DASH mejorado"
+bool mostrarDash = input.bool(true, "Mostrar DASH", group=grpDash)
+string modoMercado = input.string("Automatico", "Mercado principal", options=["Automatico", "Oro", "Nasdaq", "Manual"], group=grpDash)
+string secundarioOro = input.symbol("OANDA:XAGUSD", "Secundario para Oro", group=grpDash)
+string secundarioNasdaq = input.symbol("CME_MINI:ES1!", "Secundario para Nasdaq", group=grpDash)
+string secundarioManual = input.symbol("CME_MINI:ES1!", "Secundario manual", group=grpDash)
+bool usarAlineacionAnticipada = input.bool(false, "Alineacion anticipada por presion", group=grpDash)
+bool soloSesionCerrada = input.bool(true, "Solo usar sesiones ya cerradas", group=grpDash, tooltip="Mientras la sesion corre su rango sigue creciendo y la zona se mueve. Con esto el DASH espera a que cierre.")
+float rangoMinimoATR = input.float(0.8, "Rango minimo de sesion (x ATR 20)", minval=0.0, maxval=5.0, step=0.1, group=grpDash, tooltip="Descarta sesiones planas: una sesion estrecha genera una zona microscopica y todo se lee como ruptura.")
+int horasVigencia = input.int(8, "Vigencia de la zona (horas, 0 = sin limite)", minval=0, maxval=48, group=grpDash, tooltip="Pasadas N horas desde que cerro la sesion, su zona deja de usarse.")
+float margenCentroPct = input.float(8.0, "Margen del centro (%)", minval=0.0, maxval=30.0, step=1.0, group=grpDash) / 100.0
+float desplazamientoMinimo = input.float(0.25, "Desplazamiento minimo (rangos)", minval=0.05, maxval=1.50, step=0.05, group=grpDash)
+float calidadMinimaPct = input.float(30.0, "Calidad minima de presion (%)", minval=10.0, maxval=80.0, step=5.0, group=grpDash) / 100.0
+string ubicacionDash = input.string("Arriba derecha", "Ubicacion", options=["Arriba derecha", "Arriba izquierda", "Abajo derecha", "Abajo izquierda"], group=grpDash)
+color colorTextoAlcista = input.color(#4CAF50, "Texto alcista", group=grpDash)
+color colorTextoBajista = input.color(#E15554, "Texto bajista", group=grpDash)
+color colorTextoNeutral = input.color(#2196F3, "Texto neutral", group=grpDash)
+color colorFondoAlineado = input.color(#4CAF50, "Fondo alineado", group=grpDash)
+color colorFondoDesalineado = input.color(#E15554, "Fondo desalineado", group=grpDash)
+color colorFondoNeutral = input.color(#E0E0E0, "Fondo neutral", group=grpDash)
+color colorFondoDivergencia = input.color(#FF9800, "Fondo divergencia", group=grpDash)
+
+string tamanoNombreTV = tamanoNombre == "Muy pequeno" ? size.tiny : tamanoNombre == "Normal" ? size.normal : tamanoNombre == "Grande" ? size.large : size.small
+
+string tzAsia = zonaAsia == "Exchange" ? syminfo.timezone : zonaAsia
+string tzLondon = zonaLondon == "Exchange" ? syminfo.timezone : zonaLondon
+string tzNY = zonaNY == "Exchange" ? syminfo.timezone : zonaNY
+
+bool dentroAsia = activarAsia and not na(time(timeframe.period, sesionAsia, tzAsia))
+bool dentroLondon = activarLondon and not na(time(timeframe.period, sesionLondon, tzLondon))
+bool dentroNY = activarNY and not na(time(timeframe.period, sesionNY, tzNY))
+
+bool iniciaAsia = dentroAsia and (bar_index == 0 or not dentroAsia[1])
+bool iniciaLondon = dentroLondon and (bar_index == 0 or not dentroLondon[1])
+bool iniciaNY = dentroNY and (bar_index == 0 or not dentroNY[1])
+
+bool terminaAsia = not dentroAsia and bar_index > 0 and dentroAsia[1]
+bool terminaLondon = not dentroLondon and bar_index > 0 and dentroLondon[1]
+bool terminaNY = not dentroNY and bar_index > 0 and dentroNY[1]
+
+//=============================================================================
+// 10. MEMORIA
+//=============================================================================
+var array<box> cajasAsia = array.new_box()
+var array<line> lineasAsia = array.new_line()
+var array<label> etiquetasAsia = array.new_label()
+var int inicioAsia = na
+var int finalAsia = na
+var float maximoAsia = na
+var float minimoAsia = na
+
+var array<box> cajasLondon = array.new_box()
+var array<line> lineasLondon = array.new_line()
+var array<label> etiquetasLondon = array.new_label()
+var int inicioLondon = na
+var int finalLondon = na
+var float maximoLondon = na
+var float minimoLondon = na
+
+var array<box> cajasNY = array.new_box()
+var array<line> lineasNY = array.new_line()
+var array<label> etiquetasNY = array.new_label()
+var int inicioNY = na
+var int finalNY = na
+var float maximoNY = na
+var float minimoNY = na
+
+//=============================================================================
+// 11. FUNCIONES
+//=============================================================================
+f_limpiarCajas(array<box> ids) =>
+    while array.size(ids) > 0
+        box.delete(array.pop(ids))
+
+f_limpiarLineas(array<line> ids) =>
+    while array.size(ids) > 0
+        line.delete(array.pop(ids))
+
+f_limpiarEtiquetas(array<label> ids) =>
+    while array.size(ids) > 0
+        label.delete(array.pop(ids))
+
+f_nuevaCaja(array<box> ids, int izquierda, float techo, int derecha, float piso) =>
+    box id = box.new(left=izquierda, top=techo, right=derecha, bottom=piso, xloc=xloc.bar_index, border_color=colorBordeBalance, border_width=grosorBordeBalance, bgcolor=color.new(colorCajaBalance, transparenciaCaja))
+    array.push(ids, id)
+    id
+
+f_nuevaLinea(array<line> ids, int izquierda, float precio, int derecha, color tono, int ancho) =>
+    line id = line.new(x1=izquierda, y1=precio, x2=derecha, y2=precio, xloc=xloc.bar_index, extend=extend.none, color=tono, width=ancho, style=line.style_solid)
+    array.push(ids, id)
+    id
+
+f_nuevaEtiqueta(array<label> ids, int x, float precio, string nombre) =>
+    label id = label.new(x=x, y=precio, text=nombre, xloc=xloc.bar_index, yloc=yloc.price, style=label.style_none, color=color.new(color.white, 100), textcolor=colorNombres, size=tamanoNombreTV)
+    array.push(ids, id)
+    id
+
+f_dibujarSesion(string nombreSesion, array<box> cajasDibujo, array<line> lineasDibujo, array<label> etiquetasDibujo, int xInicio, int xFinSesion, float techoRango, float pisoRango, bool dibujarCaja, bool dibujarNivel1, bool dibujarNivel2, bool dibujarExtensiones) =>
+    f_limpiarCajas(cajasDibujo)
+    f_limpiarLineas(lineasDibujo)
+    f_limpiarEtiquetas(etiquetasDibujo)
+
+    float rango = techoRango - pisoRango
+    int xDerecha = xFinSesion + extensionDerecha
+
+    if rango > syminfo.mintick
+        float precioNivel1 = techoRango - rango * valorNivel1
+        float precioNivel2 = techoRango - rango * valorNivel2
+        float techoCaja = math.max(precioNivel1, precioNivel2)
+        float pisoCaja = math.min(precioNivel1, precioNivel2)
+
+        float extension1Arriba = techoRango - rango * valorExtension1
+        float extension1Abajo = pisoRango + rango * valorExtension1
+        float extension2Arriba = techoRango - rango * valorExtension2
+        float extension2Abajo = pisoRango + rango * valorExtension2
+
+        if mostrarNombres
+            int centroZona = int(math.round((xInicio + xDerecha) * 0.5))
+            float precioNombre = techoRango + rango * separacionNombre
+            f_nuevaEtiqueta(etiquetasDibujo, centroZona, precioNombre, nombreSesion)
+
+        if dibujarCaja
+            f_nuevaCaja(cajasDibujo, xInicio, techoCaja, xDerecha, pisoCaja)
+
+        if dibujarNivel1
+            f_nuevaLinea(lineasDibujo, xInicio, precioNivel1, xDerecha, colorNivel1, grosorNivel1)
+
+        if dibujarNivel2
+            f_nuevaLinea(lineasDibujo, xInicio, precioNivel2, xDerecha, colorNivel2, grosorNivel2)
+
+        if dibujarExtensiones
+            if mostrarExt1Arriba
+                f_nuevaLinea(lineasDibujo, xInicio, extension1Arriba, xDerecha, colorExtension1, grosorExtension1)
+
+            if mostrarExt1Abajo
+                f_nuevaLinea(lineasDibujo, xInicio, extension1Abajo, xDerecha, colorExtension1, grosorExtension1)
+
+            if mostrarExt2Arriba
+                f_nuevaLinea(lineasDibujo, xInicio, extension2Arriba, xDerecha, colorExtension2, grosorExtension2)
+
+            if mostrarExt2Abajo
+                f_nuevaLinea(lineasDibujo, xInicio, extension2Abajo, xDerecha, colorExtension2, grosorExtension2)
+
+    0
+
+//=============================================================================
+// 12. ASIA
+//=============================================================================
+if iniciaAsia
+    inicioAsia := bar_index
+    finalAsia := bar_index
+    maximoAsia := high
+    minimoAsia := low
+
+if dentroAsia
+    if na(inicioAsia)
+        inicioAsia := bar_index
+        maximoAsia := high
+        minimoAsia := low
+
+    finalAsia := bar_index
+    maximoAsia := math.max(nz(maximoAsia, high), high)
+    minimoAsia := math.min(nz(minimoAsia, low), low)
+
+    if barstate.islast
+        f_dibujarSesion("ASIA", cajasAsia, lineasAsia, etiquetasAsia, inicioAsia, finalAsia, maximoAsia, minimoAsia, mostrarCajaAsia, mostrarNivel1Asia, mostrarNivel2Asia, mostrarExtAsia)
+
+if terminaAsia and not na(inicioAsia)
+    f_dibujarSesion("ASIA", cajasAsia, lineasAsia, etiquetasAsia, inicioAsia, finalAsia, maximoAsia, minimoAsia, mostrarCajaAsia, mostrarNivel1Asia, mostrarNivel2Asia, mostrarExtAsia)
+
+//=============================================================================
+// 13. LONDON
+//=============================================================================
+if iniciaLondon
+    inicioLondon := bar_index
+    finalLondon := bar_index
+    maximoLondon := high
+    minimoLondon := low
+
+if dentroLondon
+    if na(inicioLondon)
+        inicioLondon := bar_index
+        maximoLondon := high
+        minimoLondon := low
+
+    finalLondon := bar_index
+    maximoLondon := math.max(nz(maximoLondon, high), high)
+    minimoLondon := math.min(nz(minimoLondon, low), low)
+
+    if barstate.islast
+        f_dibujarSesion("LONDON", cajasLondon, lineasLondon, etiquetasLondon, inicioLondon, finalLondon, maximoLondon, minimoLondon, mostrarCajaLondon, mostrarNivel1London, mostrarNivel2London, mostrarExtLondon)
+
+if terminaLondon and not na(inicioLondon)
+    f_dibujarSesion("LONDON", cajasLondon, lineasLondon, etiquetasLondon, inicioLondon, finalLondon, maximoLondon, minimoLondon, mostrarCajaLondon, mostrarNivel1London, mostrarNivel2London, mostrarExtLondon)
+
+//=============================================================================
+// 14. NEW YORK
+//=============================================================================
+if iniciaNY
+    inicioNY := bar_index
+    finalNY := bar_index
+    maximoNY := high
+    minimoNY := low
+
+if dentroNY
+    if na(inicioNY)
+        inicioNY := bar_index
+        maximoNY := high
+        minimoNY := low
+
+    finalNY := bar_index
+    maximoNY := math.max(nz(maximoNY, high), high)
+    minimoNY := math.min(nz(minimoNY, low), low)
+
+    if barstate.islast
+        f_dibujarSesion("NEW YORK", cajasNY, lineasNY, etiquetasNY, inicioNY, finalNY, maximoNY, minimoNY, mostrarCajaNY, mostrarNivel1NY, mostrarNivel2NY, mostrarExtNY)
+
+if terminaNY and not na(inicioNY)
+    f_dibujarSesion("NEW YORK", cajasNY, lineasNY, etiquetasNY, inicioNY, finalNY, maximoNY, minimoNY, mostrarCajaNY, mostrarNivel1NY, mostrarNivel2NY, mostrarExtNY)
+
+//=============================================================================
+// 15. MOTOR DEL DASH MEJORADO
+//=============================================================================
+string tickerMayus = str.upper(syminfo.ticker)
+string raizMayus = str.upper(syminfo.root)
+
+bool esOro = str.contains(tickerMayus, "XAU") or str.contains(tickerMayus, "GOLD") or raizMayus == "GC" or raizMayus == "MGC"
+bool esNasdaq = str.contains(tickerMayus, "NAS") or str.contains(tickerMayus, "NDX") or str.contains(tickerMayus, "QQQ") or raizMayus == "NQ" or raizMayus == "MNQ"
+
+string mercadoDetectado = modoMercado == "Oro" ? "Oro" : modoMercado == "Nasdaq" ? "Nasdaq" : modoMercado == "Manual" ? "Manual" : esOro ? "Oro" : esNasdaq ? "Nasdaq" : "Manual"
+string simboloSecundario = mercadoDetectado == "Oro" ? secundarioOro : mercadoDetectado == "Nasdaq" ? secundarioNasdaq : secundarioManual
+
+f_rangoSecundarioDash(string horario, string zona) =>
+    bool dentro = not na(time(timeframe.period, horario, zona))
+    bool inicia = dentro and (bar_index == 0 or not dentro[1])
+
+    var float maximo = na
+    var float minimo = na
+
+    if inicia
+        maximo := high
+        minimo := low
+    else if dentro
+        maximo := math.max(nz(maximo, high), high)
+        minimo := math.min(nz(minimo, low), low)
+
+    [maximo, minimo]
+
+f_datosSecundarioDash() =>
+    [altoA, bajoA] = f_rangoSecundarioDash(sesionAsia, tzAsia)
+    [altoL, bajoL] = f_rangoSecundarioDash(sesionLondon, tzLondon)
+    [altoN, bajoN] = f_rangoSecundarioDash(sesionNY, tzNY)
+
+    [altoA, bajoA, altoL, bajoL, altoN, bajoN, open, high, low, close, time]
+
+[secAltoAsia, secBajoAsia, secAltoLondon, secBajoLondon, secAltoNY, secBajoNY, openSecundario, highSecundario, lowSecundario, precioSecundario, tiempoSecundario] = request.security(simboloSecundario, timeframe.period, f_datosSecundarioDash(), gaps=barmerge.gaps_off, lookahead=barmerge.lookahead_off)
+
+//-----------------------------------------------------------------------------
+// 15.b  SESION CERRADA · VIGENCIA · RANGO MINIMO
+//-----------------------------------------------------------------------------
+float atr20 = ta.atr(20)
+
+var int   seccionCerrada = 0
+var int   tiempoCierre   = na
+var float altoCerrado    = na
+var float bajoCerrado    = na
+var float secAltoCerrado = na
+var float secBajoCerrado = na
+
+if terminaAsia and not na(maximoAsia) and not na(minimoAsia)
+    seccionCerrada := 1
+    tiempoCierre   := time
+    altoCerrado    := maximoAsia
+    bajoCerrado    := minimoAsia
+    secAltoCerrado := secAltoAsia
+    secBajoCerrado := secBajoAsia
+
+if terminaLondon and not na(maximoLondon) and not na(minimoLondon)
+    seccionCerrada := 2
+    tiempoCierre   := time
+    altoCerrado    := maximoLondon
+    bajoCerrado    := minimoLondon
+    secAltoCerrado := secAltoLondon
+    secBajoCerrado := secBajoLondon
+
+if terminaNY and not na(maximoNY) and not na(minimoNY)
+    seccionCerrada := 3
+    tiempoCierre   := time
+    altoCerrado    := maximoNY
+    bajoCerrado    := minimoNY
+    secAltoCerrado := secAltoNY
+    secBajoCerrado := secBajoNY
+
+var int ultimaSeccionDash = 0
+
+if iniciaAsia
+    ultimaSeccionDash := 1
+else if iniciaLondon
+    ultimaSeccionDash := 2
+else if iniciaNY
+    ultimaSeccionDash := 3
+
+int seccionViva = dentroAsia ? 1 : dentroLondon ? 2 : dentroNY ? 3 : ultimaSeccionDash
+int seccionDash = soloSesionCerrada ? seccionCerrada : seccionViva
+
+string nombreSeccionDash = seccionDash == 1 ? "ASIA" : seccionDash == 2 ? "LONDON" : seccionDash == 3 ? "NEW YORK" : "ESPERANDO CIERRE"
+
+float altoPrincipalDash = soloSesionCerrada ? altoCerrado : seccionDash == 1 ? maximoAsia : seccionDash == 2 ? maximoLondon : seccionDash == 3 ? maximoNY : na
+float bajoPrincipalDash = soloSesionCerrada ? bajoCerrado : seccionDash == 1 ? minimoAsia : seccionDash == 2 ? minimoLondon : seccionDash == 3 ? minimoNY : na
+
+float altoSecundarioDash = soloSesionCerrada ? secAltoCerrado : seccionDash == 1 ? secAltoAsia : seccionDash == 2 ? secAltoLondon : seccionDash == 3 ? secAltoNY : na
+float bajoSecundarioDash = soloSesionCerrada ? secBajoCerrado : seccionDash == 1 ? secBajoAsia : seccionDash == 2 ? secBajoLondon : seccionDash == 3 ? secBajoNY : na
+
+float rangoPrincipalDash = altoPrincipalDash - bajoPrincipalDash
+float rangoSecundarioDash = altoSecundarioDash - bajoSecundarioDash
+
+float nivel1PrincipalDash = altoPrincipalDash - rangoPrincipalDash * valorNivel1
+float nivel2PrincipalDash = altoPrincipalDash - rangoPrincipalDash * valorNivel2
+
+float superiorZonaPrincipalDash = math.max(nivel1PrincipalDash, nivel2PrincipalDash)
+float inferiorZonaPrincipalDash = math.min(nivel1PrincipalDash, nivel2PrincipalDash)
+float centroZonaPrincipalDash = (superiorZonaPrincipalDash + inferiorZonaPrincipalDash) * 0.5
+
+float nivel1SecundarioDash = altoSecundarioDash - rangoSecundarioDash * valorNivel1
+float nivel2SecundarioDash = altoSecundarioDash - rangoSecundarioDash * valorNivel2
+
+float superiorZonaSecundarioDash = math.max(nivel1SecundarioDash, nivel2SecundarioDash)
+float inferiorZonaSecundarioDash = math.min(nivel1SecundarioDash, nivel2SecundarioDash)
+float centroZonaSecundarioDash = (superiorZonaSecundarioDash + inferiorZonaSecundarioDash) * 0.5
+
+float segundosGrafico = timeframe.in_seconds(timeframe.period)
+
+bool temporalidadValida = timeframe.isminutes and timeframe.multiplier == 5
+
+bool rangoSuficiente = rangoMinimoATR <= 0.0 or (not na(atr20) and rangoPrincipalDash >= atr20 * rangoMinimoATR)
+
+float horasDesdeCierre = na(tiempoCierre) ? na : (time - tiempoCierre) / 3600000.0
+bool zonaVigente = horasVigencia == 0 or na(horasDesdeCierre) or horasDesdeCierre <= horasVigencia
+
+bool datosPrincipalValidos = seccionDash > 0 and not na(altoPrincipalDash) and not na(bajoPrincipalDash) and rangoPrincipalDash > syminfo.mintick and rangoSuficiente and zonaVigente
+
+bool datosSecundariosVigentes = not na(precioSecundario) and not na(tiempoSecundario) and not na(altoSecundarioDash) and not na(bajoSecundarioDash) and rangoSecundarioDash > 0.0 and math.abs(time - tiempoSecundario) <= segundosGrafico * 2000.0
+
+bool datosDashValidos = datosPrincipalValidos and datosSecundariosVigentes
+
+f_estadoRangoDash(float precio, float altoRango, float bajoRango) =>
+    na(precio) or na(altoRango) or na(bajoRango) ? 0 : precio > altoRango ? 1 : precio < bajoRango ? -1 : 0
+
+f_estadoZonaDash(float precio, float superior, float inferior) =>
+    na(precio) or na(superior) or na(inferior) ? 0 : precio > superior ? 1 : precio < inferior ? -1 : 0
+
+f_textoRangoDash(int estado) =>
+    estado == 1 ? "Arriba del alto" : estado == -1 ? "Debajo del bajo" : "Dentro del rango"
+
+f_textoZonaDash(int estado) =>
+    estado == 1 ? "Arriba de zona" : estado == -1 ? "Debajo de zona" : "Dentro de zona"
+
+f_colorDireccionDash(int estado) =>
+    estado == 1 ? colorTextoAlcista : estado == -1 ? colorTextoBajista : colorTextoNeutral
+
+int estadoRangoPrincipal = f_estadoRangoDash(close, altoPrincipalDash, bajoPrincipalDash)
+int estadoZonaPrincipal = f_estadoZonaDash(close, superiorZonaPrincipalDash, inferiorZonaPrincipalDash)
+
+int estadoRangoSecundario = datosSecundariosVigentes ? f_estadoRangoDash(precioSecundario, altoSecundarioDash, bajoSecundarioDash) : 0
+int estadoZonaSecundario = datosSecundariosVigentes ? f_estadoZonaDash(precioSecundario, superiorZonaSecundarioDash, inferiorZonaSecundarioDash) : 0
+
+int direccionPrincipal = estadoRangoPrincipal != 0 ? estadoRangoPrincipal : estadoZonaPrincipal
+int direccionSecundario = estadoRangoSecundario != 0 ? estadoRangoSecundario : estadoZonaSecundario
+
+bool rangoAlineadoArriba = datosDashValidos and estadoRangoPrincipal == 1 and estadoRangoSecundario == 1
+bool rangoAlineadoAbajo = datosDashValidos and estadoRangoPrincipal == -1 and estadoRangoSecundario == -1
+
+bool zonaAlineadaArriba = datosDashValidos and estadoZonaPrincipal == 1 and estadoZonaSecundario == 1
+bool zonaAlineadaAbajo = datosDashValidos and estadoZonaPrincipal == -1 and estadoZonaSecundario == -1
+
+bool divergenciaDentroZona = datosDashValidos and (estadoZonaPrincipal == 0 or estadoZonaSecundario == 0)
+
+bool direccionesOpuestas = datosDashValidos and direccionPrincipal != 0 and direccionSecundario != 0 and direccionPrincipal == -direccionSecundario
+
+bool parcialAlcista = datosDashValidos and ((direccionPrincipal == 1 and direccionSecundario == 0) or (direccionSecundario == 1 and direccionPrincipal == 0))
+bool parcialBajista = datosDashValidos and ((direccionPrincipal == -1 and direccionSecundario == 0) or (direccionSecundario == -1 and direccionPrincipal == 0))
+
+bool divergenciaAltos = datosDashValidos and ((estadoRangoPrincipal == 1) != (estadoRangoSecundario == 1))
+bool divergenciaBajos = datosDashValidos and ((estadoRangoPrincipal == -1) != (estadoRangoSecundario == -1))
+
+float rangoTresVelas = math.max(nz(high - low) + nz(high[1] - low[1]) + nz(high[2] - low[2]), syminfo.mintick)
+
+float cuerposTresVelas = math.abs(nz(close - open)) + math.abs(nz(close[1] - open[1])) + math.abs(nz(close[2] - open[2]))
+
+float calidadMovimiento = cuerposTresVelas / rangoTresVelas
+
+float presionPrincipal = nz(close - open) + nz(close[1] - open[1]) + nz(close[2] - open[2])
+
+float rangoMedioPrincipal = math.max(nz(ta.sma(high - low, 20), high - low), syminfo.mintick)
+
+float rangoMedioSecundario = math.max(nz(ta.sma(highSecundario - lowSecundario, 20), highSecundario - lowSecundario), 0.00000001)
+
+float margenPrincipal = math.max((superiorZonaPrincipalDash - inferiorZonaPrincipalDash) * margenCentroPct, rangoMedioPrincipal * 0.10)
+
+float margenSecundario = math.max((superiorZonaSecundarioDash - inferiorZonaSecundarioDash) * margenCentroPct, rangoMedioSecundario * 0.10)
+
+bool presionPrincipalAlcista = datosPrincipalValidos and close > centroZonaPrincipalDash + margenPrincipal and close > close[1] and close - close[2] >= rangoMedioPrincipal * desplazamientoMinimo and presionPrincipal > 0.0 and calidadMovimiento >= calidadMinimaPct
+
+bool presionPrincipalBajista = datosPrincipalValidos and close < centroZonaPrincipalDash - margenPrincipal and close < close[1] and close - close[2] <= -rangoMedioPrincipal * desplazamientoMinimo and presionPrincipal < 0.0 and calidadMovimiento >= calidadMinimaPct
+
+bool presionSecundarioAlcista = datosSecundariosVigentes and precioSecundario > centroZonaSecundarioDash + margenSecundario and precioSecundario > precioSecundario[1] and precioSecundario - precioSecundario[2] >= rangoMedioSecundario * desplazamientoMinimo
+
+bool presionSecundarioBajista = datosSecundariosVigentes and precioSecundario < centroZonaSecundarioDash - margenSecundario and precioSecundario < precioSecundario[1] and precioSecundario - precioSecundario[2] <= -rangoMedioSecundario * desplazamientoMinimo
+
+bool candidatoAnticipadoAlcista = usarAlineacionAnticipada and presionPrincipalAlcista and presionSecundarioAlcista and not direccionesOpuestas
+
+bool candidatoAnticipadoBajista = usarAlineacionAnticipada and presionPrincipalBajista and presionSecundarioBajista and not direccionesOpuestas
+
+var int biasAnticipado = 0
+
+if iniciaAsia or iniciaLondon or iniciaNY
+    biasAnticipado := 0
+else if candidatoAnticipadoAlcista
+    biasAnticipado := 1
+else if candidatoAnticipadoBajista
+    biasAnticipado := -1
+else if direccionesOpuestas
+    biasAnticipado := 0
+
+bool anticipadoAlcista = usarAlineacionAnticipada and biasAnticipado == 1 and datosDashValidos and estadoZonaPrincipal != -1 and estadoZonaSecundario != -1
+
+bool anticipadoBajista = usarAlineacionAnticipada and biasAnticipado == -1 and datosDashValidos and estadoZonaPrincipal != 1 and estadoZonaSecundario != 1
+
+string textoBias = "NEUTRAL"
+color colorBias = colorTextoNeutral
+
+if not temporalidadValida
+    textoBias := "USA 5 MIN"
+    colorBias := colorTextoBajista
+else if seccionDash == 0
+    textoBias := "ESPERANDO CIERRE"
+    colorBias := color.gray
+else if not zonaVigente
+    textoBias := "ZONA VENCIDA"
+    colorBias := color.gray
+else if not rangoSuficiente
+    textoBias := "RANGO ESTRECHO"
+    colorBias := color.gray
+else if not datosDashValidos
+    textoBias := "SIN DATOS"
+    colorBias := color.gray
+else if divergenciaDentroZona
+    textoBias := "DIVERGENCIA"
+    colorBias := colorFondoDivergencia
+else if rangoAlineadoArriba or zonaAlineadaArriba
+    textoBias := "BUY"
+    colorBias := colorTextoAlcista
+else if rangoAlineadoAbajo or zonaAlineadaAbajo
+    textoBias := "SELL"
+    colorBias := colorTextoBajista
+else if anticipadoAlcista or parcialAlcista
+    textoBias := "BUY PARCIAL"
+    colorBias := colorTextoAlcista
+else if anticipadoBajista or parcialBajista
+    textoBias := "SELL PARCIAL"
+    colorBias := colorTextoBajista
+else if direccionesOpuestas
+    textoBias := "DIVERGENCIA"
+    colorBias := colorFondoDivergencia
+
+string textoEstructura = "DENTRO DE ZONA"
+color fondoEstructura = colorFondoNeutral
+color colorTextoEstructura = color.black
+
+if not datosDashValidos
+    textoEstructura := "SIN DATOS"
+    fondoEstructura := color.gray
+else if divergenciaDentroZona
+    textoEstructura := "DIVERGENCIA"
+    fondoEstructura := colorFondoDivergencia
+else if direccionesOpuestas
+    textoEstructura := "DESALINEADOS"
+    fondoEstructura := colorFondoDesalineado
+    colorTextoEstructura := color.white
+else if zonaAlineadaArriba or zonaAlineadaAbajo or anticipadoAlcista or anticipadoBajista
+    textoEstructura := "ESTRUCTURA ALINEADA"
+    fondoEstructura := colorFondoAlineado
+else if parcialAlcista or parcialBajista
+    textoEstructura := "ALINEACION PARCIAL"
+    fondoEstructura := colorFondoDivergencia
+
+string textoEstadoRango = "NEUTRAL / ESPERANDO"
+color fondoEstadoRango = colorFondoNeutral
+color colorTextoEstadoRango = color.black
+
+if not datosDashValidos
+    textoEstadoRango := "SIN DATOS / CERRADO"
+    fondoEstadoRango := color.gray
+else if divergenciaDentroZona
+    textoEstadoRango := "DIVERGENCIA"
+    fondoEstadoRango := colorFondoDivergencia
+else if direccionesOpuestas
+    textoEstadoRango := "DESALINEADOS"
+    fondoEstadoRango := colorFondoDesalineado
+    colorTextoEstadoRango := color.white
+else if rangoAlineadoArriba
+    textoEstadoRango := "ALINEADOS ARRIBA"
+    fondoEstadoRango := colorFondoAlineado
+else if rangoAlineadoAbajo
+    textoEstadoRango := "ALINEADOS ABAJO"
+    fondoEstadoRango := colorFondoAlineado
+else if divergenciaAltos
+    textoEstadoRango := "DIVERGENCIA DE ALTOS"
+    fondoEstadoRango := colorFondoDivergencia
+else if divergenciaBajos
+    textoEstadoRango := "DIVERGENCIA DE BAJOS"
+    fondoEstadoRango := colorFondoDivergencia
+else if zonaAlineadaArriba or zonaAlineadaAbajo or anticipadoAlcista or anticipadoBajista
+    textoEstadoRango := "MISMA DIRECCION"
+    fondoEstadoRango := colorFondoAlineado
+else if parcialAlcista or parcialBajista
+    textoEstadoRango := "ALINEACION PARCIAL"
+    fondoEstadoRango := colorFondoDivergencia
+
+string posicionDash = ubicacionDash == "Arriba izquierda" ? position.top_left : ubicacionDash == "Abajo derecha" ? position.bottom_right : ubicacionDash == "Abajo izquierda" ? position.bottom_left : position.top_right
+
+var table tablero = table.new(posicionDash, 4, 4, bgcolor=colorFondoNeutral, border_color=color.black, border_width=1)
+
+var bool tableroFusionado = false
+
+if not tableroFusionado
+    table.merge_cells(tablero, 0, 0, 2, 0)
+    table.merge_cells(tablero, 3, 1, 3, 2)
+    table.merge_cells(tablero, 1, 3, 3, 3)
+    tableroFusionado := true
+
+if barstate.islast
+    if mostrarDash
+        table.cell(tablero, 0, 0, "CONFLUENCIA · " + nombreSeccionDash, text_color=color.black, text_size=size.normal, bgcolor=colorFondoNeutral, text_halign=text.align_left)
+
+        table.cell(tablero, 3, 0, textoBias, text_color=colorBias, text_size=size.normal, bgcolor=color.white, text_halign=text.align_center)
+
+        table.cell(tablero, 0, 1, "Principal", text_color=color.black, text_size=size.small, bgcolor=colorFondoNeutral, text_halign=text.align_left)
+
+        table.cell(tablero, 1, 1, f_textoRangoDash(estadoRangoPrincipal), text_color=f_colorDireccionDash(estadoRangoPrincipal), text_size=size.small, bgcolor=colorFondoNeutral)
+
+        table.cell(tablero, 2, 1, f_textoZonaDash(estadoZonaPrincipal), text_color=f_colorDireccionDash(estadoZonaPrincipal), text_size=size.small, bgcolor=colorFondoNeutral)
+
+        table.cell(tablero, 0, 2, simboloSecundario, text_color=color.black, text_size=size.small, bgcolor=colorFondoNeutral, text_halign=text.align_left)
+
+        table.cell(tablero, 1, 2, datosSecundariosVigentes ? f_textoRangoDash(estadoRangoSecundario) : "Sin datos", text_color=datosSecundariosVigentes ? f_colorDireccionDash(estadoRangoSecundario) : color.gray, text_size=size.small, bgcolor=colorFondoNeutral)
+
+        table.cell(tablero, 2, 2, datosSecundariosVigentes ? f_textoZonaDash(estadoZonaSecundario) : "Sin datos", text_color=datosSecundariosVigentes ? f_colorDireccionDash(estadoZonaSecundario) : color.gray, text_size=size.small, bgcolor=colorFondoNeutral)
+
+        table.cell(tablero, 3, 1, textoEstructura, text_color=colorTextoEstructura, text_size=size.normal, bgcolor=fondoEstructura, text_halign=text.align_center)
+
+        table.cell(tablero, 0, 3, "ESTADO RANGO:", text_color=color.black, text_size=size.small, bgcolor=colorFondoNeutral, text_halign=text.align_left)
+
+        table.cell(tablero, 1, 3, textoEstadoRango, text_color=colorTextoEstadoRango, text_size=size.normal, bgcolor=fondoEstadoRango, text_halign=text.align_center)
+    else
+        table.clear(tablero, 0, 0, 3, 3)
+
+alertcondition(rangoAlineadoArriba or zonaAlineadaArriba, "DASH BUY alineado", "Principal y secundario estan alineados para compras.")
+
+alertcondition(rangoAlineadoAbajo or zonaAlineadaAbajo, "DASH SELL alineado", "Principal y secundario estan alineados para ventas.")
+
+alertcondition(direccionesOpuestas, "DASH divergencia", "Principal y secundario estan en direcciones opuestas.")
+
+//=============================================================================
+// 16. ELIMINAR NIVELES ANTERIORES CUANDO SE DIBUJE UNA ZONA NUEVA
+//=============================================================================
+var int sesionConNiveles = 0
+var int inicioZonaConNiveles = na
+
+bool zonaAsiaDibujada = not na(inicioAsia) and maximoAsia - minimoAsia > syminfo.mintick and (terminaAsia or (dentroAsia and barstate.islast))
+bool zonaLondonDibujada = not na(inicioLondon) and maximoLondon - minimoLondon > syminfo.mintick and (terminaLondon or (dentroLondon and barstate.islast))
+bool zonaNYDibujada = not na(inicioNY) and maximoNY - minimoNY > syminfo.mintick and (terminaNY or (dentroNY and barstate.islast))
+
+if zonaAsiaDibujada and (na(inicioZonaConNiveles) or inicioAsia > inicioZonaConNiveles)
+    sesionConNiveles := 1
+    inicioZonaConNiveles := inicioAsia
+
+if zonaLondonDibujada and (na(inicioZonaConNiveles) or inicioLondon > inicioZonaConNiveles)
+    sesionConNiveles := 2
+    inicioZonaConNiveles := inicioLondon
+
+if zonaNYDibujada and (na(inicioZonaConNiveles) or inicioNY > inicioZonaConNiveles)
+    sesionConNiveles := 3
+    inicioZonaConNiveles := inicioNY
+
+if sesionConNiveles > 0
+    if sesionConNiveles != 1
+        f_limpiarLineas(lineasAsia)
+
+    if sesionConNiveles != 2
+        f_limpiarLineas(lineasLondon)
+
+    if sesionConNiveles != 3
+        f_limpiarLineas(lineasNY)
